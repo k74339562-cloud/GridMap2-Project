@@ -9,8 +9,15 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
+
+      # الحل السحري: تحميل godot-cpp تلقائياً بالسيرفر إذا كان المجلد فارغاً بهاتفك
+      - name: Ensure godot-cpp is present
+        run: |
+          if [ ! -f "godot-cpp/SConstruct" ]; then
+            echo "godot-cpp SConstruct is missing! Cloning fresh copy..."
+            rm -rf godot-cpp
+            git clone --depth 1 https://github.com/godotengine/godot-cpp.git godot-cpp
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -20,13 +27,14 @@ jobs:
       - name: Install SCons
         run: python -m pip install scons
 
-      # الإصدار الرسمي المعتمد في توثيق جودوت الحديث
-      - name: Setup Android NDK (Official r28b)
+      # استخدام NDK r28b الرسمي المطلوب لجودوت الحديث
+      - name: Setup Android NDK (r28b)
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r28b
           add-to-path: true
 
+      # مفتاح كاش ثابت حتى لا يعيد بناء godot-cpp نهائياً بعد أول نجاح
       - name: Cache godot-cpp and SCons
         uses: actions/cache@v4
         with:
@@ -34,9 +42,9 @@ jobs:
             godot-cpp/bin
             godot-cpp/gen
             .scons-cache
-          key: godot-cpp-android-r28b-${{ hashFiles('godot-cpp/**') }}
+          key: godot-cpp-r28b-arm64-v1
           restore-keys: |
-            godot-cpp-android-r28b-
+            godot-cpp-r28b-arm64-
 
       - name: Build GridMap2 (Debug ARM64)
         run: |
