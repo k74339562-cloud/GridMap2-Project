@@ -20,14 +20,13 @@ jobs:
       - name: Install SCons
         run: python -m pip install scons
 
-      # استخدام NDK حديث جداً (r27c) متوافق مع أحدث معالجات أندرويد
-      - name: Setup Android NDK
+      # الإصدار الرسمي المعتمد في توثيق جودوت الحديث
+      - name: Setup Android NDK (Official r28b)
         uses: nttld/setup-ndk@v1
         with:
-          ndk-version: r27c
+          ndk-version: r28b
           add-to-path: true
 
-      # هذا هو السحر: حفظ ملفات بناء godot-cpp لتُطبخ مرة واحدة فقط
       - name: Cache godot-cpp and SCons
         uses: actions/cache@v4
         with:
@@ -35,15 +34,14 @@ jobs:
             godot-cpp/bin
             godot-cpp/gen
             .scons-cache
-          key: godot-cpp-android-r27c-${{ hashFiles('godot-cpp/**') }}
+          key: godot-cpp-android-r28b-${{ hashFiles('godot-cpp/**') }}
           restore-keys: |
-            godot-cpp-android-r27c-
+            godot-cpp-android-r28b-
 
       - name: Build GridMap2 (Debug ARM64)
         run: |
           scons platform=android target=template_debug arch=arm64 scons_cache=.scons-cache -j$(nproc)
 
-      # رفع ملف الـ .so فقط كـ Artifact
       - name: Upload .so Only
         uses: actions/upload-artifact@v4
         with:
