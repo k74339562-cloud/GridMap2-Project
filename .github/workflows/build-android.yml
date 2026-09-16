@@ -10,7 +10,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # الحل السحري: تحميل godot-cpp تلقائياً بالسيرفر إذا كان المجلد فارغاً بهاتفك
       - name: Ensure godot-cpp is present
         run: |
           if [ ! -f "godot-cpp/SConstruct" ]; then
@@ -27,14 +26,21 @@ jobs:
       - name: Install SCons
         run: python -m pip install scons
 
-      # استخدام NDK r28b الرسمي المطلوب لجودوت الحديث
+      # تثبيت NDK r28b وربطه تلقائياً بمسار الـ SDK
       - name: Setup Android NDK (r28b)
+        id: setup-ndk
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r28b
-          add-to-path: true
+          link-to-sdk: true
 
-      # مفتاح كاش ثابت حتى لا يعيد بناء godot-cpp نهائياً بعد أول نجاح
+      # تصدير المسار ليتعرف عليه SCons فوراً
+      - name: Export NDK Path
+        run: |
+          echo "ANDROID_NDK_ROOT=${{ steps.setup-ndk.outputs.ndk-path }}" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}" >> $GITHUB_ENV
+
+      # كاش لتسريع البناء اللاحق
       - name: Cache godot-cpp and SCons
         uses: actions/cache@v4
         with:
@@ -46,9 +52,10 @@ jobs:
           restore-keys: |
             godot-cpp-r28b-arm64-
 
+      # أمر البناء النظيف
       - name: Build GridMap2 (Debug ARM64)
         run: |
-          scons platform=android target=template_debug arch=arm64 scons_cache=.scons-cache -j$(nproc)
+          scons platform=android target=template_debug arch=arm64 -j$(nproc)
 
       - name: Upload .so Only
         uses: actions/upload-artifact@v4
