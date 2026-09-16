@@ -2,13 +2,15 @@
 import os
 import sys
 
+# تفعيل مجلد الكاش لتسريع البناء
+SetOption('max_drift', 1)
+CacheDir('.scons-cache')
+
 env = SConscript("godot-cpp/SConstruct")
 
-# إعداد ملفات المصدر
 env.Append(CPPPATH=["src/"])
 sources = Glob("src/*.cpp")
 
-# تحديد مجلد الإخراج
 if env["platform"] == "android":
     target_path = "project/bin/"
     env.Append(CCFLAGS=["-fPIC"])
